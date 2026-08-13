@@ -3,35 +3,48 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PLANNER WEB TOOL v00.03</title>
+<title>PLANNER WEB TOOL v00.04</title>
 <style>
 :root{color-scheme:dark;--bg:#0c0b0a;--panel:#171512;--line:#514b3f;--ink:#f3ead3;--muted:#aaa18d;--hot:#ffd34d;--good:#8ee39a;--bad:#ff6b6b;--mag:#ff6bd6}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 header{position:sticky;top:0;z-index:5;background:#11100e;border-bottom:1px solid var(--line);padding:14px 18px;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
 header strong{color:var(--hot);letter-spacing:.08em}.tag{border:1px solid var(--line);padding:3px 7px;color:var(--muted)}
-main{max-width:1400px;margin:auto;padding:18px;display:grid;grid-template-columns:340px minmax(0,1fr);gap:18px}
+main{max-width:1400px;margin:auto;padding:18px;display:grid;grid-template-columns:380px minmax(0,1fr);gap:18px}
 .panel{background:var(--panel);border:1px solid var(--line);padding:14px}.panel h2{font-size:13px;color:var(--hot);margin:0 0 12px;letter-spacing:.08em}
-.project{margin-bottom:14px}.point{color:var(--muted);margin:6px 0}.stage{border-top:1px solid #312d26;padding:10px 0}
-.stage:first-of-type{border-top:0}.stage .no{color:var(--mag)}.status{float:right;font-size:11px;padding:1px 6px;border:1px solid var(--line)}
-.ACTIVE,.VERIFY{color:var(--hot)}.COMPLETE,.VERIFIED{color:var(--good)}.BLOCKED,.OUT_OF_SYNC,.ERROR{color:var(--bad)}
-.repo{border-top:1px solid #312d26;padding:10px 0}.repo code{word-break:break-all;color:var(--muted)}.entry{border-top:1px solid #312d26;padding:14px 0}
-.entry:first-of-type{border-top:0}.entry .meta{display:flex;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:11px}
-.entry h3{font-size:14px;margin:6px 0;color:var(--ink)}.entry p{margin:6px 0}.next{color:var(--hot)}
-button{background:#201d17;color:var(--ink);border:1px solid var(--line);padding:7px 10px;font:inherit;cursor:pointer}button:hover{border-color:var(--hot)}
-#error{color:var(--bad);white-space:pre-wrap}@media(max-width:800px){main{grid-template-columns:1fr}header{position:static}}
+.project{margin-bottom:14px}.point{color:var(--muted);margin:6px 0}.stage{border-top:1px solid #312d26;padding:10px 0}.stage:first-of-type{border-top:0}.stage .no{color:var(--mag)}
+.status{float:right;font-size:11px;padding:1px 6px;border:1px solid var(--line)}.ACTIVE,.VERIFY,.DOING{color:var(--hot)}.COMPLETE,.VERIFIED,.DONE{color:var(--good)}.BLOCKED,.OUT_OF_SYNC,.ERROR{color:var(--bad)}
+.todo{border-top:1px solid #312d26;padding:10px 0}.todo:first-of-type{border-top:0}.todo-head{display:flex;gap:8px;align-items:flex-start}.check{width:14px;height:14px;border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;margin-top:2px;color:var(--good)}.todo.DONE .check:after{content:'✓'}.todo.DONE b{text-decoration:line-through;color:var(--muted)}.todo .seq{color:var(--mag);min-width:20px}.todo-note{margin-top:6px;color:var(--muted)}
+.repo{border-top:1px solid #312d26;padding:10px 0}.repo code{word-break:break-all;color:var(--muted)}.entry{border-top:1px solid #312d26;padding:14px 0}.entry:first-of-type{border-top:0}.entry .meta{display:flex;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:11px}.entry h3{font-size:14px;margin:6px 0;color:var(--ink)}.entry p{margin:6px 0}.next{color:var(--hot)}
+button{background:#201d17;color:var(--ink);border:1px solid var(--line);padding:7px 10px;font:inherit;cursor:pointer}button:hover{border-color:var(--hot)}#error{color:var(--bad);white-space:pre-wrap}@media(max-width:800px){main{grid-template-columns:1fr}header{position:static}}
 </style>
 </head>
 <body>
-<header><strong>PLANNER WEB TOOL v00.03</strong><span class="tag">PERSISTENT ROADMAP + DIARY</span><span id="stamp" class="tag">LOADING</span><button id="refresh">REFRESH</button></header>
-<main><aside><section class="panel"><h2>PROJECT / PLAN</h2><div id="plan"></div></section><section class="panel" style="margin-top:18px"><h2>REPOSITORIES</h2><div id="repos"></div></section></aside><section class="panel"><h2>PLANNER DIARY</h2><div id="error"></div><div id="diary"></div></section></main>
+<header><strong>PLANNER WEB TOOL v00.04</strong><span class="tag">ROADMAP + TO-DO + DIARY</span><span id="stamp" class="tag">LOADING</span><button id="refresh">REFRESH</button></header>
+<main>
+<aside>
+<section class="panel"><h2>PROJECT / PLAN</h2><div id="plan"></div></section>
+<section class="panel" style="margin-top:18px"><h2>TO-DO</h2><div id="todos"></div></section>
+<section class="panel" style="margin-top:18px"><h2>REPOSITORIES</h2><div id="repos"></div></section>
+</aside>
+<section class="panel"><h2>PLANNER DIARY</h2><div id="error"></div><div id="diary"></div></section>
+</main>
 <script>
-const API_URL = "https://hymdjzhhtnyxowdtfija.supabase.co/functions/v1/planner?data=1";
+const API_URL="https://hymdjzhhtnyxowdtfija.supabase.co/functions/v1/planner?data=1";
+const TODO_URL="https://hymdjzhhtnyxowdtfija.supabase.co/rest/v1/planner_todos?select=*&order=position.asc,created_at.asc";
+const SUPABASE_KEY="sb_publishable_auFxWUjMddMjLGHaIsc3Vw_S7zPOWdo";
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function fmt(t){return t?new Date(t).toLocaleString():"";}
-async function load(){document.getElementById("stamp").textContent="SYNCING";document.getElementById("error").textContent="";try{const r=await fetch(API_URL,{cache:"no-store"});if(!r.ok)throw new Error(await r.text());const d=await r.json();render(d);document.getElementById("stamp").textContent="SYNC "+fmt(d.generated_at);}catch(e){document.getElementById("error").textContent=e.message||String(e);document.getElementById("stamp").textContent="ERROR";}}
+async function load(){
+ document.getElementById("stamp").textContent="SYNCING";document.getElementById("error").textContent="";
+ try{
+  const [r,t]=await Promise.all([fetch(API_URL,{cache:"no-store"}),fetch(TODO_URL,{cache:"no-store",headers:{apikey:SUPABASE_KEY}})]);
+  if(!r.ok)throw new Error(await r.text());if(!t.ok)throw new Error(await t.text());
+  const d=await r.json();d.todos=await t.json();render(d);document.getElementById("stamp").textContent="SYNC "+fmt(d.generated_at);
+ }catch(e){document.getElementById("error").textContent=e.message||String(e);document.getElementById("stamp").textContent="ERROR";}
+}
 function render(d){
- let plan="";
- d.projects.forEach(p=>{plan+='<div class="project"><b>'+esc(p.name)+'</b><span class="status '+esc(p.status)+'">'+esc(p.status)+'</span>';plan+='<div class="point"><b>POINT A</b><br>'+esc(p.point_a)+'</div><div class="point"><b>POINT B</b><br>'+esc(p.point_b)+'</div>';d.stages.filter(x=>x.project_id===p.id).sort((a,b)=>a.stage_no-b.stage_no).forEach(s=>{plan+='<div class="stage"><span class="no">'+esc(s.stage_no)+'</span> <b>'+esc(s.title)+'</b><span class="status '+esc(s.status)+'">'+esc(s.status)+'</span><div class="point">'+esc(s.objective)+'</div>';if(s.acceptance_criteria)plan+='<div class="point"><b>ACCEPT:</b> '+esc(s.acceptance_criteria)+'</div>';plan+='</div>';});plan+='</div>';});document.getElementById("plan").innerHTML=plan||'<div class="point">NO PROJECTS</div>';
+ let plan="";d.projects.forEach(p=>{plan+='<div class="project"><b>'+esc(p.name)+'</b><span class="status '+esc(p.status)+'">'+esc(p.status)+'</span>';plan+='<div class="point"><b>POINT A</b><br>'+esc(p.point_a)+'</div><div class="point"><b>POINT B</b><br>'+esc(p.point_b)+'</div>';d.stages.filter(x=>x.project_id===p.id).sort((a,b)=>a.stage_no-b.stage_no).forEach(s=>{plan+='<div class="stage"><span class="no">'+esc(s.stage_no)+'</span> <b>'+esc(s.title)+'</b><span class="status '+esc(s.status)+'">'+esc(s.status)+'</span><div class="point">'+esc(s.objective)+'</div>';if(s.acceptance_criteria)plan+='<div class="point"><b>ACCEPT:</b> '+esc(s.acceptance_criteria)+'</div>';plan+='</div>';});plan+='</div>';});document.getElementById("plan").innerHTML=plan||'<div class="point">NO PROJECTS</div>';
+ let todos="";(d.todos||[]).forEach(t=>{todos+='<div class="todo '+esc(t.status)+'"><div class="todo-head"><span class="check"></span><span class="seq">'+esc(t.position)+'.</span><div style="flex:1"><b>'+esc(t.title)+'</b><span class="status '+esc(t.status)+'">'+esc(t.status)+'</span></div></div>';if(t.details)todos+='<div class="todo-note">'+esc(t.details)+'</div>';if(t.completion_note)todos+='<div class="todo-note"><b>NOTE:</b> '+esc(t.completion_note)+'</div>';if(t.next_action)todos+='<div class="next"><b>NEXT:</b> '+esc(t.next_action)+'</div>';todos+='</div>';});document.getElementById("todos").innerHTML=todos||'<div class="point">NO TASKS</div>';
  let repos="";d.repositories.forEach(r=>{repos+='<div class="repo"><b>'+esc(r.repository_full_name)+'</b><span class="status '+esc(r.sync_status)+'">'+esc(r.sync_status)+'</span><div>'+esc(r.branch)+' - '+esc(r.recorded_version||"—")+'</div><code>'+esc(r.recorded_commit||"—")+'</code><div class="point">verified '+esc(fmt(r.verified_at)||"never")+'</div></div>';});document.getElementById("repos").innerHTML=repos||'<div class="point">NO REPOSITORIES</div>';
  let diary="";d.diary.forEach(e=>{diary+='<article class="entry"><div class="meta"><span>'+esc(fmt(e.created_at))+'</span><span>'+esc(e.entry_type)+'</span>'+(e.version?'<span>'+esc(e.version)+'</span>':'')+(e.machine?'<span>'+esc(e.machine)+'</span>':'')+'</div><h3>'+esc(e.summary)+'</h3>'+(e.details?'<p>'+esc(e.details)+'</p>':'')+(e.repository_full_name?'<div class="point">'+esc(e.repository_full_name)+(e.commit_sha?' - '+esc(e.commit_sha):'')+'</div>':'')+(e.next_action?'<p class="next"><b>NEXT:</b> '+esc(e.next_action)+'</p>':'')+'</article>';});document.getElementById("diary").innerHTML=diary||'<div class="point">NO DIARY ENTRIES</div>';
 }
