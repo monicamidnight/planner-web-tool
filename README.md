@@ -1,4 +1,4 @@
-# PLANNER WEB TOOL v00.02
+# PLANNER WEB TOOL v00.03
 
 Standalone static monitoring frontend for the persistent Planner roadmap + diary.
 
@@ -11,4 +11,4 @@ Deployment target:
 - Production branch: main
 
 Run:
-`bash RUN-PLANNER-WEB-TOOL-v00.02.sh`
+`bash RUN-PLANNER-WEB-TOOL-v00.03.sh`
