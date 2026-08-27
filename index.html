@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PLANNER WEB TOOL v00.05</title>
+<title>PLANNER WEB TOOL v00.06</title>
 <style>
 :root{color-scheme:dark;--bg:#0c0b0a;--panel:#171512;--line:#514b3f;--ink:#f3ead3;--muted:#aaa18d;--hot:#ffd34d;--good:#8ee39a;--bad:#ff6b6b;--mag:#ff6bd6}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
@@ -19,7 +19,7 @@ button{background:#201d17;color:var(--ink);border:1px solid var(--line);padding:
 </style>
 </head>
 <body>
-<header><strong>PLANNER WEB TOOL v00.05</strong><span class="tag">ROADMAP + TO-DO + DIARY</span><span id="stamp" class="tag">LOADING</span><button id="refresh">REFRESH</button></header>
+<header><strong id="title">PLANNER WEB TOOL v00.06</strong><span class="tag">ROADMAP + TO-DO + DIARY</span><span id="scope" class="tag">GLOBAL</span><span id="stamp" class="tag">LOADING</span><button id="refresh">REFRESH</button></header>
 <main>
 <aside>
 <section class="panel"><h2>TO-DO</h2><div id="todos"></div></section>
@@ -29,8 +29,11 @@ button{background:#201d17;color:var(--ink);border:1px solid var(--line);padding:
 <section class="panel"><h2>PLANNER DIARY</h2><div id="error"></div><div id="diary"></div></section>
 </main>
 <script>
-const API_URL="https://hymdjzhhtnyxowdtfija.supabase.co/functions/v1/planner?data=1";
-const TODO_URL="https://hymdjzhhtnyxowdtfija.supabase.co/rest/v1/planner_todos?select=*&order=position.asc,created_at.asc";
+const PROJECT_ID=new URLSearchParams(location.search).get("project");
+const API_BASE="https://hymdjzhhtnyxowdtfija.supabase.co/functions/v1/planner?data=1";
+const API_URL=PROJECT_ID?API_BASE+"&project="+encodeURIComponent(PROJECT_ID):API_BASE;
+const TODO_BASE="https://hymdjzhhtnyxowdtfija.supabase.co/rest/v1/planner_todos?select=*";
+const TODO_URL=TODO_BASE+(PROJECT_ID?"&project_id=eq."+encodeURIComponent(PROJECT_ID):"")+"&order=position.asc,created_at.asc";
 const SUPABASE_KEY="sb_publishable_auFxWUjMddMjLGHaIsc3Vw_S7zPOWdo";
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function fmt(t){return t?new Date(t).toLocaleString():"";}
@@ -43,6 +46,16 @@ async function load(){
  }catch(e){document.getElementById("error").textContent=e.message||String(e);document.getElementById("stamp").textContent="ERROR";}
 }
 function render(d){
+ if(PROJECT_ID){
+  document.getElementById("scope").textContent="PROJECT "+PROJECT_ID;
+  const scopedProject=d.projects&&d.projects[0];
+  if(scopedProject){
+   document.getElementById("title").textContent=scopedProject.name.toUpperCase()+" — PLANNER";
+   document.title=scopedProject.name+" — Planner";
+  }
+ }else{
+  document.getElementById("scope").textContent="GLOBAL";
+ }
  let plan="";d.projects.forEach(p=>{plan+='<div class="project"><b>'+esc(p.name)+'</b><span class="status '+esc(p.status)+'">'+esc(p.status)+'</span>';plan+='<div class="point"><b>POINT A</b><br>'+esc(p.point_a)+'</div><div class="point"><b>POINT B</b><br>'+esc(p.point_b)+'</div>';d.stages.filter(x=>x.project_id===p.id).sort((a,b)=>a.stage_no-b.stage_no).forEach(s=>{plan+='<div class="stage"><span class="no">'+esc(s.stage_no)+'</span> <b>'+esc(s.title)+'</b><span class="status '+esc(s.status)+'">'+esc(s.status)+'</span><div class="point">'+esc(s.objective)+'</div>';if(s.acceptance_criteria)plan+='<div class="point"><b>ACCEPT:</b> '+esc(s.acceptance_criteria)+'</div>';plan+='</div>';});plan+='</div>';});document.getElementById("plan").innerHTML=plan||'<div class="point">NO PROJECTS</div>';
  let todos="";(d.todos||[]).forEach(t=>{todos+='<div class="todo '+esc(t.status)+'"><div class="todo-head"><span class="check"></span><span class="seq">'+esc(t.position)+'.</span><div style="flex:1"><b>'+esc(t.title)+'</b><span class="status '+esc(t.status)+'">'+esc(t.status)+'</span></div></div>';if(t.details)todos+='<div class="todo-note">'+esc(t.details)+'</div>';if(t.completion_note)todos+='<div class="todo-note"><b>NOTE:</b> '+esc(t.completion_note)+'</div>';if(t.next_action)todos+='<div class="next"><b>NEXT:</b> '+esc(t.next_action)+'</div>';todos+='</div>';});document.getElementById("todos").innerHTML=todos||'<div class="point">NO TASKS</div>';
  let repos="";d.repositories.forEach(r=>{repos+='<div class="repo"><b>'+esc(r.repository_full_name)+'</b><span class="status '+esc(r.sync_status)+'">'+esc(r.sync_status)+'</span><div>'+esc(r.branch)+' - '+esc(r.recorded_version||"—")+'</div><code>'+esc(r.recorded_commit||"—")+'</code><div class="point">verified '+esc(fmt(r.verified_at)||"never")+'</div></div>';});document.getElementById("repos").innerHTML=repos||'<div class="point">NO REPOSITORIES</div>';
