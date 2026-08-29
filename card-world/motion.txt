@@ -1,0 +1,93 @@
+
+// LIVE CITY MOTION PASS
+const cityMovers=[];
+const P=(x,z,wait=0)=>({x,z,wait});
+
+function addRouteMover(root,points,speed,{segment=0,t=0,kind='walker'}={}){
+  const mover={root,points,speed,segment:Math.max(0,Math.min(points.length-1,segment|0)),t:Math.max(0,Math.min(.999,t)),wait:0,kind};
+  const p0=points[mover.segment],p1=points[(mover.segment+1)%points.length];
+  root.position.x=THREE.MathUtils.lerp(p0.x,p1.x,mover.t);
+  root.position.z=THREE.MathUtils.lerp(p0.z,p1.z,mover.t);
+  if(kind==='car'){
+    const dx=p1.x-p0.x,dz=p1.z-p0.z;
+    root.rotation.y=Math.atan2(-dx,-dz);
+  }
+  cityMovers.push(mover);
+  return mover;
+}
+
+function makeWalker(variant,points,speed,segment=0,t=0){
+  const root=new THREE.Group();
+  world.add(root);
+  robot(0,0,variant,root);
+  return addRouteMover(root,points,speed,{segment,t,kind:'walker'});
+}
+
+function makeTrafficCar(color,points,speed,segment=0,t=0){
+  const root=new THREE.Group();
+  world.add(root);
+  lowCar(0,0,0,color,root);
+  return addRouteMover(root,points,speed,{segment,t,kind:'car'});
+}
+
+function angleStep(current,target,maxStep){
+  let d=(target-current+Math.PI)%(Math.PI*2)-Math.PI;
+  if(d<-Math.PI)d+=Math.PI*2;
+  d=Math.max(-maxStep,Math.min(maxStep,d));
+  return current+d;
+}
+
+function updateCityMotion(dt){
+  for(const m of cityMovers){
+    if(m.wait>0){m.wait=Math.max(0,m.wait-dt);continue;}
+    let p0=m.points[m.segment],p1=m.points[(m.segment+1)%m.points.length];
+    let dx=p1.x-p0.x,dz=p1.z-p0.z;
+    let dist=Math.hypot(dx,dz);
+    if(dist<.001){m.segment=(m.segment+1)%m.points.length;m.t=0;continue;}
+    m.t+=m.speed*dt/dist;
+    while(m.t>=1){
+      m.t-=1;
+      m.segment=(m.segment+1)%m.points.length;
+      p0=m.points[m.segment];
+      p1=m.points[(m.segment+1)%m.points.length];
+      if(p0.wait)m.wait=Math.max(m.wait,p0.wait);
+      dx=p1.x-p0.x;dz=p1.z-p0.z;dist=Math.max(.001,Math.hypot(dx,dz));
+    }
+    m.root.position.x=THREE.MathUtils.lerp(p0.x,p1.x,m.t);
+    m.root.position.z=THREE.MathUtils.lerp(p0.z,p1.z,m.t);
+    if(m.kind==='car'){
+      const target=Math.atan2(-dx,-dz);
+      m.root.rotation.y=angleStep(m.root.rotation.y,target,dt*4.8);
+    }
+  }
+}
+
+const leftWalk=[P(-5.25,7),P(-5.25,-4,1.1),P(-5.25,-49)];
+const rightWalk=[P(5.25,-46),P(5.25,-29,1.0),P(5.25,6)];
+const northCross=[P(-19,-10.62),P(-6.2,-10.62,.8),P(19,-10.62)];
+const southCross=[P(18,-21.38),P(6.1,-21.38,.7),P(-18,-21.38)];
+const nwCorner=[P(-5.25,5),P(-5.25,-10.62,.5),P(-17,-10.62),P(-5.25,-10.62,.5)];
+const seCorner=[P(5.25,-43),P(5.25,-21.38,.6),P(16,-21.38),P(5.25,-21.38,.6)];
+
+makeWalker(0,leftWalk,.72,0,.18);
+makeWalker(1,leftWalk,.58,1,.55);
+makeWalker(2,rightWalk,.67,0,.42);
+makeWalker(0,northCross,.62,0,.35);
+makeWalker(1,southCross,.74,1,.20);
+makeWalker(2,nwCorner,.57,2,.12);
+makeWalker(0,seCorner,.64,0,.66);
+
+const mainTraffic=[P(-1.62,9),P(-1.62,-56),P(1.62,-56),P(1.62,9)];
+const crossTraffic=[P(-22,-17.55),P(22,-17.55),P(22,-14.45),P(-22,-14.45)];
+makeTrafficCar(mats.wine,mainTraffic,3.25,0,.20);
+makeTrafficCar(mats.petrol,mainTraffic,2.85,2,.35);
+makeTrafficCar(mats.rust,crossTraffic,3.55,0,.48);
+makeTrafficCar(mats.grey,crossTraffic,3.05,2,.15);
+
+let __motionLast=performance.now();
+const __baseAnimate=animate;
+animate=function(now){
+  const md=Math.min(.06,Math.max(0,(now-__motionLast)/1000));
+  if(now-__motionLast>=FRAME){updateCityMotion(md);__motionLast=now;}
+  __baseAnimate(now);
+};
