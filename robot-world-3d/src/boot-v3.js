@@ -14,6 +14,10 @@ const playerMarker='function updatePlayer(dt){';
 if(!src.includes(playerMarker))throw new Error('RW3D boot patch: player marker missing');
 src=src.replace(playerMarker,"function updatePlayer(dt){if(window.RW3D_BUILDER_ACTIVE)return;");
 
+const interactMarker='function interact(){';
+if(!src.includes(interactMarker))throw new Error('RW3D boot patch: interact marker missing');
+src=src.replace(interactMarker,"function interact(){if(window.RW3D_BUILDER_ACTIVE)return;");
+
 const endMarker='requestAnimationFrame(animate);';
 const end=src.lastIndexOf(endMarker);
 if(end<0)throw new Error('RW3D boot patch: animation marker missing');
@@ -22,4 +26,4 @@ src=src.slice(0,end)+bridge+src.slice(end);
 
 const blob=URL.createObjectURL(new Blob([src],{type:'text/javascript'}));
 try{await import(blob);}finally{URL.revokeObjectURL(blob);}
-await import('./builder-runtime.js?v=1');
+await import('./builder-runtime.js?v=2');
