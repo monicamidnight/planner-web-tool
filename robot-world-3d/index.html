@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Robot World 3D</title>
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<div id="viewport" tabindex="0"><canvas id="world"></canvas></div>
+<div class="crosshair" aria-hidden="true"></div>
+
+<div id="hud">
+  <div class="hud-box"><b>ROBOT WORLD 3D</b><span id="location">CONVEYOR CLUB — BUS STOP</span></div>
+  <div class="hud-box"><b>OBJECTIVE</b><span id="objective">Find the transit chip and get inside the Club.</span></div>
+  <div class="hud-box"><b>INVENTORY</b><span id="inventory">EMPTY</span></div>
+</div>
+
+<div id="prompt"></div>
+<div id="toast"></div>
+<div id="dialogue" class="hidden">
+  <div id="speaker"></div>
+  <div id="dialogueText"></div>
+  <div class="dialogueHint">E / CLICK TO CONTINUE</div>
+</div>
+
+<div id="entry">
+  <div id="entryCard">
+    <div class="title">ROBOT WORLD 3D</div>
+    <button id="enter" type="button">CLICK TO ENTER</button>
+    <div class="help">MOUSE LOOK · WASD MOVE · LEFT HOLD FORWARD · RIGHT HOLD REVERSE · E INTERACT · ESC LEAVE</div>
+  </div>
+</div>
+
+<button id="fullscreen" type="button" title="Fullscreen">⛶</button>
+<button id="reset" type="button" title="Reset persistent prototype state">RESET WORLD</button>
+
+<script type="module" src="./src/game.js"></script>
+</body>
+</html>
