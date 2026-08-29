@@ -34,7 +34,23 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#070609;fon
 <script type="module">
 try{
  const [a,b]=await Promise.all([fetch('./app-a.txt').then(r=>{if(!r.ok)throw Error('A');return r.text()}),fetch('./app-b.txt').then(r=>{if(!r.ok)throw Error('B');return r.text()})]);
- const url=URL.createObjectURL(new Blob([a,b],{type:'text/javascript'}));
+ const tileSign=`function signTexture(text,fg='#ff3f97',bg='rgba(8,8,10,.92)',vertical=false){
+  const cw=vertical?10:28, ch=vertical?28:10;
+  return canvasTexture(cw,ch,(g,w,h)=>{
+    g.fillStyle=bg;g.fillRect(0,0,w,h);
+    g.fillStyle=fg;
+    const blocks=vertical
+      ? [[3,2,4,3],[3,8,4,3],[3,14,4,3],[3,20,4,3]]
+      : [[2,3,4,4],[8,3,4,4],[14,3,4,4],[20,3,4,4]];
+    for(const [x,y,bw,bh] of blocks)g.fillRect(x,y,bw,bh);
+    g.globalAlpha=.20;g.fillStyle='#fff';
+    if(vertical){g.fillRect(4,2,1,19)}else{g.fillRect(2,4,19,1)}
+    g.globalAlpha=1;
+  });
+}
+function neonSign`;
+ const cleanA=a.replace(/function signTexture\(text,[\s\S]*?\n}\nfunction neonSign/,tileSign);
+ const url=URL.createObjectURL(new Blob([cleanA,b],{type:'text/javascript'}));
  await import(url);
  URL.revokeObjectURL(url);
 }catch(err){document.getElementById('status').textContent='DEMO FAILED TO LOAD — REFRESH';console.error(err)}
