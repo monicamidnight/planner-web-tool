@@ -34,11 +34,15 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#070609;fon
 <script type="module">
 try{
  const [a,b]=await Promise.all([
-  fetch('./app-a.txt?v=4').then(r=>{if(!r.ok)throw Error('A');return r.text()}),
-  fetch('./app-b.txt?v=4').then(r=>{if(!r.ok)throw Error('B');return r.text()})
+  fetch('./app-a.txt?v=5').then(r=>{if(!r.ok)throw Error('A');return r.text()}),
+  fetch('./app-b.txt?v=5').then(r=>{if(!r.ok)throw Error('B');return r.text()})
  ]);
- const cleanA=a.replace(/function neonSign\([^)]*\)\{[\s\S]*?\n\}\n\nfunction windowPanel/,`function neonSign(){return null;}\n\nfunction windowPanel`);
- const url=URL.createObjectURL(new Blob([cleanA,b],{type:'text/javascript'}));
+ const start=a.indexOf('function neonSign(');
+ const end=a.indexOf('\nfunction windowPanel',start);
+ if(start<0 || end<0) throw new Error('NEON SIGN REMOVAL PATCH DID NOT MATCH');
+ const cleanA=a.slice(0,start)+'function neonSign(){return null;}\n'+a.slice(end+1);
+ if(cleanA.includes('function neonSign(text,')) throw new Error('NEON SIGN RENDERER STILL PRESENT');
+ const url=URL.createObjectURL(new Blob([cleanA,'\n',b],{type:'text/javascript'}));
  await import(url);
  URL.revokeObjectURL(url);
 }catch(err){document.getElementById('status').textContent='DEMO FAILED TO LOAD — REFRESH';console.error(err)}
